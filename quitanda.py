@@ -135,15 +135,17 @@ def editprod():
     desc_prod = request.form['desc_prod']
     preco_prod = request.form['preco_prod']
     img_prod = request.files['img_prod']
-    id_foto = str(uuid.uuid4().hex)
-    filename = id_foto + nome_prod + '.png'
-    img_prod.save("static/img/produtos/" + filename)
     conexao = conecta_database()
-    conexao.execute(
-        'UPDATE produtos SET nome_prod = ?, desc_prod = ?, preco_prod = ?, img_prod = ? WHERE id_prod = ?',
-        (nome_prod, desc_prod, preco_prod, filename, id_prod))
-    conexao.commit()
-    conexao.close()
+    if img_prod:
+        produto = conexao.execute('SELECT * FROM produtos WHERE id_prod = ?', (id_prod,)).fetchall()
+        filename = produto[0]['img_prod']
+        img_prod.save("static/img/produtos/"+filename)
+        conexao.execute('UPDATE produtos SET nome_prod = ?, desc_prod = ?, preco_prod = ?, img_prod = ? WHERE id_prod = ?',(nome_prod, desc_prod, preco_prod, filename, id_prod))
+    else:
+        conexao.execute('UPDATE produtos SET nome_prod = ?, desc_prod = ?, preco_prod = ? WHERE id_prod = ?',(nome_prod, desc_prod, preco_prod, id_prod))
+        conexao.commit()
+        conexao.close()
+    
     return redirect('/adm')
 
 @app.route("/busca", methods=["POST"])
